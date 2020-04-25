@@ -3,10 +3,13 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var passport = require('passport');
 var mongoose = require('mongoose');
 
+const { user, pwd, ip, db, origin } = require('./config/config');
+
 // Conectamos a MongoDB
-mongoose.connect('mongodb://dneuj:Colchones123@15.188.76.225/tienda-colchones',
+mongoose.connect(`mongodb://${user}:${pwd}@${ip}/${db}`,
 {useUnifiedTopology: true,useNewUrlParser: true}, 
 function(err) {
   if(err){
@@ -16,14 +19,36 @@ function(err) {
     console.log("Connected to DB");
   }
 });
+
 /**/
 require('./models/products');
 require('./models/users');
+require('./config/passport');
 /**/
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
+
+// Add headers
+app.use(function (req, res, next) {
+  
+  // Website you wish to allow to connect
+  res.setHeader('Access-Control-Allow-Origin', origin);
+
+  // Request methods you wish to allow
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+  // Request headers you wish to allow
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+
+  // Set to true if you need the website to include cookies in the requests sent
+  // to the API (e.g. in case you use sessions)
+  res.setHeader('Access-Control-Allow-Credentials', true);
+
+  // Pass to next layer of middleware
+  next();
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -35,12 +60,24 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+//
+app.use(passport.initialize());
+app.use('/api/', indexRouter);
+app.use('/api/users', usersRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
+});
+
+// error handlers
+// Catch unauthorised errors
+app.use(function (err, req, res, next) {
+  if (err.name === 'UnauthorizedError') {
+    res.status(401);
+    res.json({"message" : err.name + ": " + err.message});
+  }
 });
 
 // error handler
