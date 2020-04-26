@@ -9,19 +9,19 @@ passport.use(new LocalStrategy({
   function(username, password, done) {
     User.findOne({ email: username }, function (err, user) {
       if (err) { return done(err); }
-      // Return if user not found in database
+      // Devuelve si el usuario no fue encontrado en bd
       if (!user) {
         return done(null, false, {
           message: 'User not found'
         });
       }
-      // Return if password is wrong
+      // Devuelve si la contraseña es incorrecta
       if (!user.validPassword(password)) {
         return done(null, false, {
           message: 'Password is wrong'
         });
       }
-      // If credentials are correct, return the user object
+      // Devuelve el usuario si las credenciales son correctas
       return done(null, user);
     });
   }

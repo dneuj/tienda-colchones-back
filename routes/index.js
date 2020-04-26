@@ -30,7 +30,7 @@ router.get('/', function(req, res, next) {
   Products.find({ featured: true },function(err, products){
 
     if(err){ return next(err) }
-
+    
     res.json(products);
 
   });
@@ -92,11 +92,11 @@ router.get('/productos/:id', function(req, res, next){
 
 });
 
-/* POST Producto */
+/* POST Producto  '/productos' */
 router.post('/productos', function(req, res, next){
 
   var product = new Products(req.body);
-  
+
   product.save(function(err, product){
     
     if(err){return next(err)}

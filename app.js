@@ -6,27 +6,40 @@ var logger = require('morgan');
 var passport = require('passport');
 var mongoose = require('mongoose');
 
-const { user, pwd, ip, db, origin } = require('./config/config');
+const { user, pwd, ip, db, origin, c_prods, c_users, c_name, c_pwd, c_email } = require('./config/config');
 
-// Conectamos a MongoDB
+
 mongoose.connect(`mongodb://${user}:${pwd}@${ip}/${db}`,
 {useUnifiedTopology: true,useNewUrlParser: true}, 
 function(err) {
   if(err){
     console.log("Connection error with: " + err);
   }
-  else{
-    console.log("Connected to DB");
-  }
 });
 
-/**/
+//importamos los models de producto y users
 require('./models/products');
 require('./models/users');
 require('./config/passport');
-/**/
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+
+//Validar la existencia de la colección usuarios
+mongoose.connection.on('open', function (ref) {
+  console.log('Connected to mongo server.');
+  //obtiene lista de colecciones
+  mongoose.connection.db.listCollections({ name: c_users }).toArray(function (err, names) {
+    //Si no encontramos la coleccion de usuarios creamos un usuario
+    if(names==[]){
+        var auth = require('./controllers/authentication');
+        var newuser = {name: c_name, email: c_email,
+          password: c_pwd}
+        
+        auth.register(newuser);
+      }
+  });
+});
 
 var app = express();
 
@@ -60,11 +73,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-//
+
 app.use(passport.initialize());
 app.use('/api/', indexRouter);
 app.use('/api/users', usersRouter);
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

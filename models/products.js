@@ -11,7 +11,7 @@ var ProductSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    image: String,
+    image: String | ArrayBuffer,
     type: {
         type: String,
         required: true
